@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Zenova Study</title>
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0A1628; --navy-2:#132542; --gold:#E7B93C; --gold-deep:#B9862A;
+    --paper:#FAF8F1; --card:#FFFFFF; --ink:#101826; --ink-soft:#5B6579;
+    --line:#E7E2D6; --green:#1E8E5A; --red:#C4483A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh;}
+  h1,h2,h3{font-family:'Space Grotesk', sans-serif; letter-spacing:-0.01em;}
+  code, .mono{font-family:'JetBrains Mono', monospace;}
+  button{font-family:'Inter',sans-serif;}
+
+  #authGate{position:fixed; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; z-index:200;}
+  #authGate.hidden{display:none;}
+  .gate-spinner{width:34px;height:34px; border:3px solid var(--line); border-top-color:var(--gold-deep); border-radius:50%; animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #appShell{display:none;}
+  #appShell.visible{display:block;}
+
+  /* nav */
+  .nav{position:sticky; top:0; z-index:50; background:rgba(250,248,241,0.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
+  .nav-inner{max-width:1180px; margin:0 auto; padding:14px 24px; display:flex; align-items:center; justify-content:space-between;}
+  .nav-logo{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px; color:var(--navy);}
+  .nav-logo img{height:28px; width:28px; object-fit:contain;}
+  .nav-logo .tag{background:rgba(185,134,42,0.1); color:var(--gold-deep); font-size:11px; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:0.04em;}
+  .nav-right{display:flex; align-items:center; gap:16px;}
+  .nav-email{font-size:13.5px; color:var(--ink-soft);}
+  .btn-logout{background:none; border:1.5px solid var(--line); color:var(--navy); padding:8px 16px; border-radius:9px; font-weight:600; font-size:13.5px; cursor:pointer; transition:border-color 0.15s ease;}
+  .btn-logout:hover{border-color:#C5CCDA; background:#fff;}
+
+  /* tabs */
+  .tabbar{max-width:1180px; margin:0 auto; padding:20px 24px 0; display:flex; gap:8px; border-bottom:1px solid var(--line);}
+  .tab-btn{
+    background:none; border:none; cursor:pointer; padding:12px 18px;
+    font-size:14.5px; font-weight:600; color:var(--ink-soft);
+    border-bottom:2.5px solid transparent; transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn.active{color:var(--navy); border-color:var(--gold-deep);}
+
+  .panel{max-width:1180px; margin:0 auto; padding:32px 24px 80px;}
+  .panel.hidden{display:none;}
+
+  /* stat cards */
+  .stats-row{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;}
+  @media (max-width:760px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px;}
+  .stat-label{font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
+  .stat-value{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:26px; color:var(--navy);}
+
+  /* ---------- QUESTION MANAGER ---------- */
+  .qm-grid{display:grid; grid-template-columns:280px 1fr; gap:24px;}
+  @media (max-width:860px){.qm-grid{grid-template-columns:1fr;}}
+
+  .subject-list{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px;}
+  .subject-item{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:none; border:none; padding:12px 14px; border-radius:10px; cursor:pointer;
+    font-size:14px; font-weight:600; color:var(--ink); text-align:left;
+    transition:background 0.15s ease;
+  }
+  .subject-item:hover{background:var(--paper);}
+  .subject-item.active{background:rgba(185,134,42,0.08); color:var(--gold-deep);}
+  .subject-item .count{font-size:12px; font-weight:700; color:var(--ink-soft); background:var(--paper); padding:2px 9px; border-radius:100px; font-family:'JetBrains Mono',monospace;}
+  .subject-item.active .count{background:rgba(185,134,42,0.15); color:var(--gold-deep);}
+
+  .qm-editor{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:28px;}
+  .qm-editor h3{font-size:18px; font-weight:700; color:var(--navy); margin-bottom:6px;}
+  .qm-editor .sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:20px;}
+
+  .format-box{
+    background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;
+    font-size:12.5px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7;
+  }
+  .format-box pre{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--navy); white-space:pre-wrap; margin-top:8px;}
+
+  textarea{
+    width:100%; min-height:220px; padding:14px; border:1.5px solid var(--line); border-radius:10px;
+    font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6; color:var(--ink);
+    background:#FCFBF6; resize:vertical; margin-bottom:14px;
+  }
+  textarea:focus{outline:none; border-color:var(--gold-deep); box-shadow:0 0 0 3px rgba(185,134,42,0.14);}
+
+  .qm-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--navy); color:#fff; border:none; padding:11px 22px; border-radius:9px;
+    font-weight:700; font-size:14px; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary:hover:not(:disabled){background:var(--navy-2); transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:0.5; cursor:not-allowed; transform:none;}
+  .btn-danger-outline{
+    background:none; border:1.5px solid #F0C9C1; color:var(--red); padding:10px 20px; border-radius:9px;
+    font-weight:600; font-size:14px; cursor:pointer; transition:background 0.15s ease;
+  }
+  .btn-danger-outline:hover{background:#FBEAE7;}
+
+  .spinner{width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:none;}
+  .btn-loading .spinner{display:inline-block;}
+  .btn-loading .btn-label{display:none;}
+
+  .alert{display:none; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px; font-size:13.5px; line-height:1.5; margin-bottom:16px;}
+  .alert.show{display:flex;}
+  .alert.error{background:#FBEAE7; color:#9A3226; border:1px solid #F0C9C1;}
+  .alert.success{background:#E9F7EF; color:#1E6B3F; border:1px solid #BFE6CD;}
+  .alert svg{width:18px; height:18px; flex-shrink:0; margin-top:1px;}
+
+  .existing-list{margin-top:24px; border-top:1px solid var(--line); padding-top:20px;}
+  .existing-q{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px;
+  }
+  .existing-q:last-child{border-bottom:none;}
+  .existing-q .qtext{color:var(--ink); flex:1;}
+  .existing-q .qremove{background:none; border:none; color:var(--ink-soft); cursor:pointer; flex-shrink:0; padding:4px;}
+  .existing-q .qremove:hover{color:var(--red);}
+  .existing-q .qremove svg{width:15px; height:15px;}
+  .empty-state{text-align:center; color:var(--ink-soft); font-size:13.5px; padding:24px 0;}
+
+  /* ---------- RESULTS VIEWER ---------- */
+  .results-toolbar{display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:center;}
+  .search-wrap{position:relative; flex:1; min-width:220px;}
+  .search-wrap svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#9AA6BC;}
+  .search-wrap input{width:100%; padding:10px 14px 10px 38px; border:1.5px solid var(--line); border-radius:9px; font-size:14px; background:var(--card);}
+  .search-wrap input:focus{outline:none; border-color:var(--gold-deep);}
+  .btn-export{background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:9px; font-weight:600; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:7px;}
+  .btn-export:hover{background:var(--navy-2);}
+  .btn-export svg{width:15px; height:15px;}
+
+  .results-table-wrap{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; min-width:900px;}
+  th{
+    text-align:left; padding:13px 18px; font-size:12px; font-weight:700; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:0.04em; background:var(--paper); border-bottom:1px solid var(--line);
+    cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  th:hover{color:var(--navy);}
+  th .arrow{font-size:10px; margin-left:4px; opacity:0.5;}
+  td{padding:14px 18px; font-size:14px; border-bottom:1px solid var(--line); color:var(--ink);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FCFBF6;}
+  .name-cell{font-weight:600; color:var(--navy);}
+  .score-cell{font-family:'JetBrains Mono',monospace; font-weight:700;}
+  .score-cell.good{color:var(--green);}
+  .score-cell.mid{color:var(--gold-deep);}
+  .score-cell.low{color:var(--red);}
+  .pill-sm{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px;}
+  .pill-sm.done{background:rgba(30,142,90,0.12); color:var(--green);}
+  .pill-sm.pending{background:rgba(231,185,60,0.16); color:var(--gold-deep);}
+  .btn-delete{background:none; border:1.5px solid #F0C9C1; color:var(--red); padding:5px 10px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:background 0.15s ease; white-space:nowrap;}
+  .btn-delete:hover{background:#FBEAE7;}
+  .time-cell{font-size:12.5px; color:var(--ink-soft);}
+  .table-empty{padding:60px 20px; text-align:center; color:var(--ink-soft); font-size:14px;}
+</style>
+</head>
+<body>
+
+<div id="authGate"><div class="gate-spinner"></div></div>
+
+<div id="appShell">
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <img src="logo.png" alt="Zenova Study">
+        ZENOVA STUDY <span class="tag">Admin</span>
+      </div>
+      <div class="nav-right">
+        <span class="nav-email" id="adminEmail">...</span>
+        <button class="btn-logout" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="results">Results</button>
+    <button class="tab-btn" data-tab="questions">Question Manager</button>
+  </div>
+
+  <!-- ===================== RESULTS PANEL ===================== -->
+  <div class="panel" id="panelResults">
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-label">Registered</div><div class="stat-value" id="statRegistered">—</div></div>
+      <div class="stat-card"><div class="stat-label">Completed exam</div><div class="stat-value" id="statCompleted">—</div></div>
+      <div class="stat-card"><div class="stat-label">Average score</div><div class="stat-value" id="statAverage">—</div></div>
+      <div class="stat-card"><div class="stat-label">Top score</div><div class="stat-value" id="statTop">—</div></div>
+    </div>
+
+    <div class="results-toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, email, or phone...">
+      </div>
+      <button class="btn-export" id="exportBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Export CSV
+      </button>
+    </div>
+
+    <div class="results-table-wrap">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th data-sort="name">Name <span class="arrow">↕</span></th>
+            <th data-sort="email">Email <span class="arrow">↕</span></th>
+            <th data-sort="phone">Phone</th>
+            <th data-sort="status">Status</th>
+            <th data-sort="score">Score <span class="arrow">↕</span></th>
+            <th data-sort="percent">%</th>
+            <th data-sort="submitted">Submitted <span class="arrow">↕</span></th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="8" class="table-empty">Loading students...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===================== QUESTION MANAGER PANEL ===================== -->
+  <div class="panel hidden" id="panelQuestions">
+    <div class="qm-grid">
+      <div class="subject-list" id="subjectList"></div>
+
+      <div class="qm-editor">
+        <h3 id="editorSubjectName">Mathematics</h3>
+        <p class="sub">Paste questions below using the format shown, then click "Add to bank". You can add more in batches anytime.</p>
+
+        <div class="alert error" id="qmError">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span id="qmErrorText"></span>
+        </div>
+        <div class="alert success" id="qmSuccess">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+          <span id="qmSuccessText"></span>
+        </div>
+
+        <div class="format-box">
+          One question per block, separated by a blank line. Mark the correct option with an asterisk (*).
+          <pre>What is the capital of Nigeria?
+A) Lagos
+B) *Abuja
+C) Kano
+D) Ibadan
+
+2 + 2 = ?
+A) 3
+B) *4
+C) 5
+D) 6</pre>
+        </div>
+
+        <textarea id="questionInput" placeholder="Paste your questions here using the format above..."></textarea>
+
+        <div class="qm-actions">
+          <button class="btn-primary" id="addQuestionsBtn">
+            <span class="btn-label">Add to bank</span>
+            <span class="spinner"></span>
+          </button>
+        </div>
+
+        <div class="existing-list">
+          <h3 style="font-size:14px; margin-bottom:4px;">Existing questions (<span id="existingCount">0</span>)</h3>
+          <div id="existingQuestionsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, query
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJutYkF94mnZiBNdl_XgWOkoRlnyODGYc",
+    authDomain: "zenova-competition-f2197.firebaseapp.com",
+    projectId: "zenova-competition-f2197",
+    storageBucket: "zenova-competition-f2197.firebasestorage.app",
+    messagingSenderId: "385389095336",
+    appId: "1:385389095336:web:63e754823a3cbaea66959d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const ADMIN_LOGIN_URL = "admin-login.html";
+
+  const SUBJECT_LABELS = {
+    english: "English", maths: "Mathematics", physics: "Physics", biology: "Biology",
+    chemistry: "Chemistry", geography: "Geography", economics: "Economics",
+    literature: "Literature in English", government: "Government", history: "History",
+    agric: "Agricultural Science", crs: "Christian Religious Studies",
+    commerce: "Commerce", irk: "Islamic Religious Knowledge", accounting: "Accounting"
+  };
+  const SUBJECT_ORDER = ["english","maths","physics","biology","chemistry","geography","economics","literature","government","history","agric","crs","commerce","irk","accounting"];
+
+  let activeSubject = "english";
+  let allUsers = [];
+  let sortKey = "name";
+  let sortDir = 1;
+
+  // ---------- Auth gate ----------
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      window.location.href = ADMIN_LOGIN_URL;
+      return;
+    }
+    try{
+      const adminSnap = await getDoc(doc(db, "admins", user.uid));
+      if(!adminSnap.exists()){
+        await signOut(auth);
+        window.location.href = ADMIN_LOGIN_URL;
+        return;
+      }
+    }catch(err){
+      console.error('Admin check failed:', err);
+      window.location.href = ADMIN_LOGIN_URL;
+      return;
+    }
+
+    document.getElementById('adminEmail').textContent = user.email;
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('appShell').classList.add('visible');
+
+    loadResults();
+    renderSubjectList();
+    loadQuestionsForSubject(activeSubject);
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = ADMIN_LOGIN_URL;
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('panelResults').classList.toggle('hidden', tab !== 'results');
+      document.getElementById('panelQuestions').classList.toggle('hidden', tab !== 'questions');
+    });
+  });
+
+  // ===================================================
+  // RESULTS VIEWER
+  // ===================================================
+  async function loadResults(){
+    try{
+      const snap = await getDocs(collection(db, "users"));
+      allUsers = [];
+      snap.forEach(d => {
+        const data = d.data();
+        allUsers.push({
+          uid: d.id,
+          name: data.name || "—",
+          email: data.email || "—",
+          phone: data.phone || "—",
+          examResult: data.examResult || null
+        });
+      });
+      renderStats();
+      renderTable();
+    }catch(err){
+      console.error('Failed to load results:', err);
+      document.getElementById('resultsBody').innerHTML = `<tr><td colspan="8" class="table-empty">Couldn't load students. Check your connection and refresh.</td></tr>`;
+    }
+  }
+
+  function renderStats(){
+    const total = allUsers.length;
+    const completed = allUsers.filter(u => u.examResult);
+    const avgPct = completed.length > 0
+      ? Math.round(completed.reduce((sum, u) => sum + (u.examResult.totalScore / u.examResult.totalMax) * 100, 0) / completed.length)
+      : 0;
+    const topUser = completed.reduce((top, u) => {
+      const pct = u.examResult.totalScore / u.examResult.totalMax;
+      return (!top || pct > top.pct) ? { pct, score: u.examResult.totalScore, max: u.examResult.totalMax } : top;
+    }, null);
+
+    document.getElementById('statRegistered').textContent = total;
+    document.getElementById('statCompleted').textContent = completed.length;
+    document.getElementById('statAverage').textContent = completed.length > 0 ? `${avgPct}%` : '—';
+    document.getElementById('statTop').textContent = topUser ? `${topUser.score}/${topUser.max}` : '—';
+  }
+
+  function renderTable(){
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+    let rows = allUsers.filter(u =>
+      !searchTerm ||
+      u.name.toLowerCase().includes(searchTerm) ||
+      u.email.toLowerCase().includes(searchTerm) ||
+      u.phone.toLowerCase().includes(searchTerm)
+    );
+
+    rows = rows.slice().sort((a, b) => {
+      let av, bv;
+      if(sortKey === 'score'){
+        av = a.examResult ? a.examResult.totalScore / a.examResult.totalMax : -1;
+        bv = b.examResult ? b.examResult.totalScore / b.examResult.totalMax : -1;
+      }else if(sortKey === 'status'){
+        av = a.examResult ? 1 : 0;
+        bv = b.examResult ? 1 : 0;
+      }else{
+        av = (a[sortKey] || '').toString().toLowerCase();
+        bv = (b[sortKey] || '').toString().toLowerCase();
+      }
+      if(av < bv) return -1 * sortDir;
+      if(av > bv) return 1 * sortDir;
+      return 0;
+    });
+
+    const tbody = document.getElementById('resultsBody');
+    if(rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No students match your search.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(u => {
+      if(u.examResult){
+        const pct = Math.round((u.examResult.totalScore / u.examResult.totalMax) * 100);
+        const cls = pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'low';
+        const submittedAt = u.examResult.submittedAt;
+        let timeStr = '—';
+        if(submittedAt){
+          // Firestore Timestamp has .toDate(), plain Date objects also work
+          const d = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
+          timeStr = d.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        }
+        return `<tr>
+          <td class="name-cell">${escapeHtml(u.name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(u.phone)}</td>
+          <td><span class="pill-sm done">Completed</span></td>
+          <td class="score-cell ${cls}">${u.examResult.totalScore}/${u.examResult.totalMax}</td>
+          <td class="score-cell ${cls}">${pct}%</td>
+          <td class="time-cell">${timeStr}</td>
+          <td><button class="btn-delete" data-uid="${u.uid}" data-name="${escapeHtml(u.name)}">Delete</button></td>
+        </tr>`;
+      }
+      return `<tr>
+        <td class="name-cell">${escapeHtml(u.name)}</td>
+        <td>${escapeHtml(u.email)}</td>
+        <td>${escapeHtml(u.phone)}</td>
+        <td><span class="pill-sm pending">Not yet</span></td>
+        <td class="score-cell">—</td>
+        <td class="score-cell">—</td>
+        <td class="time-cell">—</td>
+        <td><button class="btn-delete" data-uid="${u.uid}" data-name="${escapeHtml(u.name)}">Delete</button></td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteStudent(btn.dataset.uid, btn.dataset.name));
+    });
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function deleteStudent(uid, name){
+    if(!confirm(`Delete "${name}" permanently? This removes their profile and exam result. This cannot be undone.`)) return;
+    try{
+      await deleteDoc(doc(db, "users", uid));
+      allUsers = allUsers.filter(u => u.uid !== uid);
+      renderStats();
+      renderTable();
+    }catch(err){
+      console.error('Delete failed:', err);
+      alert('Could not delete student. Check your connection and try again.');
+    }
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if(sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+      renderTable();
+    });
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const headers = ['Name','Email','Phone','Status','Score','Max','Percent','Submitted'];
+    const rows = allUsers.map(u => {
+      if(u.examResult){
+        const pct = Math.round((u.examResult.totalScore / u.examResult.totalMax) * 100);
+        const submittedAt = u.examResult.submittedAt;
+        let timeStr = '';
+        if(submittedAt){
+          const d = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
+          timeStr = d.toLocaleString('en-GB');
+        }
+        return [u.name, u.email, u.phone, 'Completed', u.examResult.totalScore, u.examResult.totalMax, pct + '%', timeStr];
+      }
+      return [u.name, u.email, u.phone, 'Not yet', '', '', '', ''];
+    });
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `zenova-utme-cbt-challenge-2-results-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ===================================================
+  // QUESTION MANAGER
+  // ===================================================
+  function renderSubjectList(){
+    const list = document.getElementById('subjectList');
+    list.innerHTML = SUBJECT_ORDER.map(id => `
+      <button class="subject-item ${id === activeSubject ? 'active' : ''}" data-subject="${id}">
+        ${SUBJECT_LABELS[id]}
+        <span class="count" id="count-${id}">—</span>
+      </button>
+    `).join('');
+
+    list.querySelectorAll('.subject-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeSubject = btn.dataset.subject;
+        renderSubjectList();
+        loadQuestionsForSubject(activeSubject);
+      });
+    });
+
+    SUBJECT_ORDER.forEach(updateSubjectCount);
+  }
+
+  async function updateSubjectCount(subjectId){
+    try{
+      const snap = await getDocs(collection(db, "questions", subjectId, "items"));
+      const el = document.getElementById(`count-${subjectId}`);
+      if(el) el.textContent = snap.size;
+    }catch(err){
+      console.error('Count failed for', subjectId, err);
+    }
+  }
+
+  let currentQuestionDocs = [];
+
+  async function loadQuestionsForSubject(subjectId){
+    document.getElementById('editorSubjectName').textContent = SUBJECT_LABELS[subjectId];
+    document.getElementById('questionInput').value = '';
+    clearQmAlerts();
+
+    const listEl = document.getElementById('existingQuestionsList');
+    listEl.innerHTML = `<div class="empty-state">Loading...</div>`;
+
+    try{
+      const snap = await getDocs(collection(db, "questions", subjectId, "items"));
+      currentQuestionDocs = [];
+      snap.forEach(d => currentQuestionDocs.push({ id: d.id, ...d.data() }));
+
+      document.getElementById('existingCount').textContent = currentQuestionDocs.length;
+
+      if(currentQuestionDocs.length === 0){
+        listEl.innerHTML = `<div class="empty-state">No questions yet for ${SUBJECT_LABELS[subjectId]}. Paste some above to get started.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = currentQuestionDocs.map(q => `
+        <div class="existing-q" data-id="${q.id}">
+          <span class="qtext">${escapeHtml(q.text || '(no text)')}</span>
+          <button class="qremove" data-id="${q.id}" data-subject="${subjectId}" title="Delete question">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          </button>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.qremove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if(!confirm('Delete this question? This cannot be undone.')) return;
+          try{
+            await deleteDoc(doc(db, "questions", btn.dataset.subject, "items", btn.dataset.id));
+            loadQuestionsForSubject(activeSubject);
+            updateSubjectCount(activeSubject);
+          }catch(err){
+            console.error('Delete failed:', err);
+            alert('Could not delete. Check your connection and try again.');
+          }
+        });
+      });
+    }catch(err){
+      console.error('Failed to load questions:', err);
+      listEl.innerHTML = `<div class="empty-state">Couldn't load existing questions.</div>`;
+    }
+  }
+
+  function showQmError(msg){
+    document.getElementById('qmSuccess').classList.remove('show');
+    document.getElementById('qmErrorText').textContent = msg;
+    document.getElementById('qmError').classList.add('show');
+  }
+  function showQmSuccess(msg){
+    document.getElementById('qmError').classList.remove('show');
+    document.getElementById('qmSuccessText').textContent = msg;
+    document.getElementById('qmSuccess').classList.add('show');
+  }
+  function clearQmAlerts(){
+    document.getElementById('qmError').classList.remove('show');
+    document.getElementById('qmSuccess').classList.remove('show');
+  }
+
+  // ---------- Parser ----------
+  // Format:
+  // Question text?
+  // A) option
+  // B) *correct option
+  // C) option
+  // D) option
+  //
+  // (blank line between questions)
+  function parseQuestions(raw){
+    const blocks = raw.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    const parsed = [];
+    const errors = [];
+
+    blocks.forEach((block, idx) => {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      if(lines.length < 5){
+        errors.push(`Block ${idx + 1}: expected a question line + 4 options, got ${lines.length} line(s).`);
+        return;
+      }
+      const text = lines[0].replace(/^\d+[\).]?\s*/, '');
+      const optionLines = lines.slice(1, 5);
+      let correctIndex = -1;
+      const options = optionLines.map((line, i) => {
+        const stripped = line.replace(/^[A-D][\)\.]\s*/i, '');
+        if(stripped.startsWith('*')){
+          correctIndex = i;
+          return stripped.slice(1).trim();
+        }
+        return stripped.trim();
+      });
+
+      if(correctIndex === -1){
+        errors.push(`Block ${idx + 1}: no option marked with * as the correct answer.`);
+        return;
+      }
+      if(options.some(o => !o)){
+        errors.push(`Block ${idx + 1}: one or more options are empty.`);
+        return;
+      }
+
+      parsed.push({ text, options, correctIndex });
+    });
+
+    return { parsed, errors };
+  }
+
+  document.getElementById('addQuestionsBtn').addEventListener('click', async () => {
+    clearQmAlerts();
+    const raw = document.getElementById('questionInput').value;
+    if(!raw.trim()){
+      showQmError('Paste at least one question first.');
+      return;
+    }
+
+    const { parsed, errors } = parseQuestions(raw);
+
+    if(parsed.length === 0){
+      showQmError(errors.length ? errors[0] : 'Could not parse any questions. Check the format and try again.');
+      return;
+    }
+
+    const btn = document.getElementById('addQuestionsBtn');
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+
+    try{
+      for(const q of parsed){
+        await addDoc(collection(db, "questions", activeSubject, "items"), q);
+      }
+      let msg = `Added ${parsed.length} question${parsed.length === 1 ? '' : 's'} to ${SUBJECT_LABELS[activeSubject]}.`;
+      if(errors.length > 0){
+        msg += ` ${errors.length} block(s) were skipped due to formatting issues.`;
+      }
+      showQmSuccess(msg);
+      document.getElementById('questionInput').value = '';
+      loadQuestionsForSubject(activeSubject);
+      updateSubjectCount(activeSubject);
+    }catch(err){
+      console.error('Failed to save questions:', err);
+      showQmError('Could not save questions. Check your connection and try again.');
+    }finally{
+      btn.disabled = false;
+      btn.classList.remove('btn-loading');
+    }
+  });
+</script>
+
+</body>
+</html>

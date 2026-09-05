@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Zenova Study</title>
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0A1628; --navy-2:#132542; --gold:#E7B93C; --gold-deep:#B9862A;
+    --paper:#FAF8F1; --card:#FFFFFF; --ink:#101826; --ink-soft:#5B6579;
+    --line:#E7E2D6; --red:#C4483A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--navy); color:var(--ink); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    position:relative; overflow:hidden;
+  }
+  h1,h2{font-family:'Space Grotesk', sans-serif; letter-spacing:-0.01em;}
+
+  .bg-watermark{position:absolute;top:-100px;right:-120px;width:420px;height:420px;opacity:0.05;pointer-events:none;}
+
+  .card{
+    background:var(--card); border-radius:18px; padding:40px 36px;
+    max-width:380px; width:100%; position:relative; z-index:2;
+  }
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:28px;}
+  .brand img{height:28px; width:28px; object-fit:contain;}
+  .brand span{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px; color:var(--navy);}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(185,134,42,0.1); color:var(--gold-deep);
+    font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px;
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:16px;
+  }
+  h2{font-size:22px; font-weight:700; color:var(--navy); margin-bottom:6px;}
+  .sub{color:var(--ink-soft); font-size:14px; margin-bottom:26px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:7px;}
+  .input-wrap{position:relative;}
+  .input-wrap svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:17px; height:17px; color:#9AA6BC;}
+  input{
+    width:100%; padding:12px 14px 12px 40px; border:1.5px solid var(--line); border-radius:10px;
+    font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink); background:#FCFBF6;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input::placeholder{color:#A7A090;}
+  input:focus{outline:none; border-color:var(--gold-deep); box-shadow:0 0 0 3px rgba(185,134,42,0.14); background:#fff;}
+
+  .btn-primary{
+    width:100%; background:var(--navy); color:#fff; border:none; padding:13px; border-radius:10px;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer; margin-top:6px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:background 0.15s ease, transform 0.15s ease;
+  }
+  .btn-primary:hover{background:var(--navy-2); transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+  .btn-primary:focus-visible{outline:2px solid var(--navy);outline-offset:2px;}
+
+  .alert{
+    display:none; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px;
+    font-size:13.5px; line-height:1.5; margin-bottom:16px;
+    background:#FBEAE7; color:#9A3226; border:1px solid #F0C9C1;
+  }
+  .alert.show{display:flex;}
+  .alert svg{position:static; width:18px; height:18px; flex-shrink:0; margin-top:1px;}
+
+  .spinner{width:15px; height:15px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .btn-loading .spinner{display:inline-block;}
+  .btn-loading .btn-label{display:none;}
+
+  .back-link{display:flex; align-items:center; gap:6px; color:var(--ink-soft); font-size:13px; text-decoration:none; margin-top:22px; justify-content:center;}
+  .back-link:hover{color:var(--navy);}
+</style>
+</head>
+<body>
+
+<img class="bg-watermark" src="logo-white.png" alt="">
+
+<div class="card">
+  <div class="brand">
+    <img src="logo.png" alt="Zenova Study">
+    <span>ZENOVA STUDY</span>
+  </div>
+  <span class="badge">Admin access</span>
+  <h2>Admin login</h2>
+  <p class="sub">Sign in with your admin account to manage questions and view results.</p>
+
+  <div class="alert error" id="errorAlert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span id="errorText">Something went wrong.</span>
+  </div>
+
+  <form id="loginForm" novalidate>
+    <div class="field">
+      <label for="email">Email address</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 6c0-1.1-.9-2-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2zM22 6l-10 7L2 6"/></svg>
+        <input type="email" id="email" placeholder="admin@zenovastudy.com.ng" autocomplete="email" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+      </div>
+    </div>
+    <button type="submit" class="btn-primary" id="loginBtn">
+      <span class="btn-label">Log in to admin</span>
+      <span class="spinner"></span>
+    </button>
+  </form>
+
+  <a class="back-link" href="login.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to student login
+  </a>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJutYkF94mnZiBNdl_XgWOkoRlnyODGYc",
+    authDomain: "zenova-competition-f2197.firebaseapp.com",
+    projectId: "zenova-competition-f2197",
+    storageBucket: "zenova-competition-f2197.firebasestorage.app",
+    messagingSenderId: "385389095336",
+    appId: "1:385389095336:web:63e754823a3cbaea66959d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const ADMIN_DASHBOARD_URL = "admin-dashboard.html";
+
+  const errorAlert = document.getElementById('errorAlert');
+  const errorText = document.getElementById('errorText');
+
+  function showError(msg){
+    errorText.textContent = msg;
+    errorAlert.classList.add('show');
+  }
+  function clearError(){
+    errorAlert.classList.remove('show');
+  }
+
+  function friendlyError(code){
+    switch(code){
+      case 'auth/invalid-email': return 'Please enter a valid email address.';
+      case 'auth/user-not-found': return 'No account found with that email.';
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': return 'Incorrect email or password.';
+      case 'auth/too-many-requests': return 'Too many attempts. Please wait a moment and try again.';
+      default: return 'Something went wrong. Please try again.';
+    }
+  }
+
+  function setLoading(btn, loading){
+    btn.disabled = loading;
+    btn.classList.toggle('btn-loading', loading);
+  }
+
+  const form = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if(!email || !password){
+      showError('Please enter your email and password.');
+      return;
+    }
+
+    setLoading(loginBtn, true);
+    try{
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      // Check admin status
+      const adminRef = doc(db, "admins", cred.user.uid);
+      const adminSnap = await getDoc(adminRef);
+
+      if(!adminSnap.exists()){
+        showError(`This account doesn't have admin access. Your account ID is: ${cred.user.uid} — make sure this exact ID exists as a document in the "admins" collection in Firestore.`);
+        setLoading(loginBtn, false);
+        await auth.signOut();
+        return;
+      }
+
+      window.location.href = ADMIN_DASHBOARD_URL;
+    }catch(err){
+      console.error('Admin login error:', err);
+      const msg = err.code ? friendlyError(err.code) + ` (${err.code})` : err.message || 'Something went wrong. Please try again.';
+      showError(msg);
+      setLoading(loginBtn, false);
+    }
+  });
+</script>
+
+</body>
+</html>

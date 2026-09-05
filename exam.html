@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam — UTME CBT Challenge 2.0 | Zenova Study</title>
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0A1628; --navy-2:#132542; --gold:#E7B93C; --gold-deep:#B9862A;
+    --paper:#FAF8F1; --card:#FFFFFF; --ink:#101826; --ink-soft:#5B6579;
+    --line:#E7E2D6; --green:#1E8E5A; --red:#C4483A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh; overflow-x:hidden;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:'Inter',sans-serif; cursor:pointer;}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+  /* GATE */
+  #authGate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:14px;}
+  #authGate.hidden{display:none;}
+  #authGate p{font-size:13.5px;color:var(--ink-soft);font-weight:600;}
+  .gate-spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--gold-deep);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #appShell{display:none;}
+  #appShell.visible{display:block;}
+
+  /* INTRO */
+  #introScreen{max-width:540px;margin:0 auto;padding:48px 20px;text-align:center;}
+  #introScreen.hidden{display:none;}
+  .intro-icon{width:64px;height:64px;margin:0 auto 20px;background:var(--navy);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--gold);}
+  .intro-icon svg{width:30px;height:30px;}
+  #introScreen h1{font-size:clamp(22px,5vw,28px);font-weight:700;color:var(--navy);margin-bottom:8px;}
+  #introScreen p{color:var(--ink-soft);font-size:14.5px;margin-bottom:24px;line-height:1.6;}
+  .intro-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;text-align:left;margin-bottom:20px;}
+  .intro-rule{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--ink);padding:10px 0;}
+  .intro-rule:not(:last-child){border-bottom:1px solid var(--line);}
+  .intro-rule svg{width:17px;height:17px;color:var(--gold-deep);flex-shrink:0;margin-top:2px;}
+  .subjects-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px;}
+  .subject-chip{background:rgba(185,134,42,0.08);border:1px solid rgba(185,134,42,0.25);color:var(--gold-deep);padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;}
+  .btn-primary{background:var(--navy);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:background .15s,transform .15s;}
+  .btn-primary:hover{background:var(--navy-2);transform:translateY(-1px);}
+
+  /* EXAM TOPBAR */
+  #examScreen.hidden{display:none;}
+  .exam-topbar{
+    position:sticky;top:0;z-index:60;background:var(--navy);color:#fff;
+    padding:10px 16px;display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;gap:10px;
+  }
+  @media(max-width:600px){
+    .exam-topbar{grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:8px;}
+    .exam-brand{grid-column:1;grid-row:1;}
+    .timer{grid-column:2;grid-row:1;}
+    .btn-submit-top{grid-column:1/-1;grid-row:2;width:100%;justify-content:center;}
+  }
+  .exam-brand{display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;}
+  .exam-brand img{height:22px;width:22px;object-fit:contain;}
+  .timer{
+    display:flex;align-items:center;gap:7px;
+    background:rgba(231,185,60,0.16);border:1px solid rgba(231,185,60,0.35);
+    padding:7px 14px;border-radius:100px;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--gold);
+    white-space:nowrap;
+  }
+  .timer.warning{background:rgba(231,185,60,0.22);border-color:rgba(231,185,60,0.5);color:#F0C75C;}
+  .timer.danger{background:rgba(196,72,58,0.22);border-color:rgba(196,72,58,0.5);color:#F19A9A;animation:pulse 1s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .timer svg{width:14px;height:14px;}
+  .btn-submit-top{background:var(--red);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-weight:700;font-size:13px;transition:background .15s;display:flex;align-items:center;gap:6px;justify-content:center;}
+  .btn-submit-top:hover{background:#A93A2F;}
+
+  /* SUBJECT TABS */
+  .subject-tabs{display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .subject-tabs::-webkit-scrollbar{display:none;}
+  .subject-tab{
+    flex-shrink:0;background:none;border:none;padding:12px 16px;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
+    border-bottom:2.5px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;
+  }
+  @media(max-width:480px){.subject-tab{padding:11px 12px;font-size:12px;}}
+  .subject-tab:hover{color:var(--navy);}
+  .subject-tab.active{color:var(--navy);border-color:var(--gold-deep);}
+  .subject-tab .badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:17px;height:17px;border-radius:100px;
+    background:var(--line);color:var(--ink-soft);font-size:10px;font-weight:700;margin-left:5px;padding:0 3px;
+  }
+  .subject-tab.complete .badge{background:rgba(30,142,90,0.16);color:var(--green);}
+
+  /* EXAM BODY */
+  .exam-body{max-width:1080px;margin:0 auto;padding:20px 16px 40px;display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start;}
+  @media(max-width:820px){.exam-body{grid-template-columns:1fr;padding-bottom:100px;}}
+
+  /* QUESTION CARD */
+  .question-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;}
+  @media(max-width:480px){.question-card{padding:18px 16px;border-radius:14px;}}
+  .q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .q-number{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--gold-deep);text-transform:uppercase;letter-spacing:.03em;}
+  .q-flag{
+    display:flex;align-items:center;gap:5px;background:none;border:1.5px solid var(--line);
+    padding:6px 11px;border-radius:100px;font-size:12px;font-weight:600;color:var(--ink-soft);
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  .q-flag svg{width:12px;height:12px;}
+  .q-flag.flagged{background:rgba(231,185,60,0.14);border-color:var(--gold);color:var(--gold-deep);}
+  .q-text{font-size:clamp(14.5px,3vw,16.5px);font-weight:600;color:var(--navy);line-height:1.6;margin-bottom:20px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{
+    display:flex;align-items:flex-start;gap:14px;
+    border:1.5px solid var(--line);border-radius:12px;padding:16px;
+    transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent;cursor:pointer;
+  }
+  .option:active{background:rgba(185,134,42,0.05);}
+  .option.selected{border-color:var(--navy);background:rgba(10,22,40,0.04);}
+  .option-letter{
+    width:30px;height:30px;flex-shrink:0;border-radius:50%;
+    border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;color:var(--ink-soft);
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .option.selected .option-letter{background:var(--navy);border-color:var(--navy);color:var(--gold);}
+  .option-text{font-size:14.5px;color:var(--ink);line-height:1.5;padding-top:4px;}
+  .q-nav{display:flex;justify-content:space-between;margin-top:22px;gap:10px;}
+  @media(max-width:820px){.q-nav{display:none;}}
+  .btn-nav{
+    background:var(--paper);color:var(--navy);border:1.5px solid var(--line);
+    padding:13px 20px;border-radius:10px;font-weight:600;font-size:14px;
+    display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;
+  }
+  @media(max-width:400px){.btn-nav{padding:13px 16px;font-size:13.5px;flex:1;justify-content:center;}}
+  .btn-nav:hover:not(:disabled){border-color:#C5CCDA;background:#fff;}
+  .btn-nav:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-nav svg{width:15px;height:15px;}
+  .btn-nav.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btn-nav.primary:hover:not(:disabled){background:var(--navy-2);}
+
+  /* PALETTE — desktop sidebar */
+  .palette-col{position:sticky;top:72px;}
+  .palette-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .palette-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .palette-title{font-size:12.5px;font-weight:700;color:var(--navy);}
+  .palette-answered-count{font-size:12px;color:var(--ink-soft);font-weight:600;}
+  .palette-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px;}
+  .palette-btn{
+    aspect-ratio:1;border-radius:7px;border:1.5px solid var(--line);
+    background:var(--paper);color:var(--ink-soft);font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s,background .15s,color .15s;position:relative;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .palette-btn:hover{border-color:#C5CCDA;}
+  .palette-btn.answered{background:rgba(185,134,42,0.12);border-color:var(--gold-deep);color:var(--gold-deep);}
+  .palette-btn.current{background:var(--navy);border-color:var(--navy);color:var(--gold);}
+  .palette-btn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--gold);border:1.5px solid #fff;}
+  .palette-legend{display:flex;flex-direction:column;gap:8px;font-size:11.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .legend-row{display:flex;align-items:center;gap:5px;}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+  @media(max-width:820px){.palette-col{display:none;}}
+
+  /* MOBILE BOTTOM BAR */
+  .mobile-bar{display:none;}
+  @media(max-width:820px){
+    .mobile-bar{
+      display:flex;align-items:center;gap:10px;
+      position:fixed;bottom:0;left:0;right:0;z-index:40;
+      background:rgba(250,248,241,0.97);backdrop-filter:blur(10px);
+      border-top:1px solid var(--line);
+      padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    }
+    .mobile-bar .btn-nav{flex:1;justify-content:center;}
+    .btn-palette-toggle{
+      background:var(--navy);color:#fff;border:none;
+      padding:13px 16px;border-radius:10px;font-weight:700;font-size:13px;
+      display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    }
+    .btn-palette-toggle svg{width:15px;height:15px;}
+  }
+
+  /* PALETTE DRAWER (mobile overlay) */
+  .palette-drawer{display:none;}
+  @media(max-width:820px){
+    .palette-drawer{
+      display:block;
+      position:fixed;bottom:0;left:0;right:0;z-index:50;
+      background:#fff;border-radius:20px 20px 0 0;
+      border-top:1px solid var(--line);
+      box-shadow:0 -8px 32px rgba(10,22,40,0.15);
+      padding:0 16px calc(20px + env(safe-area-inset-bottom));
+      transform:translateY(100%);
+      transition:transform .28s cubic-bezier(0.32,0.72,0,1);
+      max-height:80vh;overflow-y:auto;
+    }
+    .palette-drawer.open{transform:translateY(0);}
+    .drawer-handle{width:40px;height:4px;background:var(--line);border-radius:100px;margin:14px auto 18px;}
+    .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.4);z-index:49;}
+    .drawer-overlay.show{display:block;}
+  }
+  .btn-submit-full{width:100%;background:var(--red);color:#fff;border:none;padding:13px;border-radius:10px;font-weight:700;font-size:14.5px;transition:background .15s;}
+  .btn-submit-full:hover{background:#A93A2F;}
+
+  /* CALCULATOR */
+  .btn-calc{
+    background:rgba(231,185,60,0.18);border:1px solid rgba(231,185,60,0.4);
+    color:#fff;padding:7px 14px;border-radius:100px;font-size:13px;font-weight:600;
+    display:none;align-items:center;gap:6px;transition:background .15s;
+  }
+  .btn-calc.visible{display:flex;}
+  .btn-calc:hover{background:rgba(231,185,60,0.3);}
+  .btn-calc svg{width:14px;height:14px;}
+
+  .calc-overlay{
+    position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:90;
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .calc-overlay.show{display:flex;}
+  .calc-box{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:300px;box-shadow:0 24px 60px rgba(10,22,40,0.25);}
+  .calc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .calc-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--navy);}
+  .calc-close{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:4px;font-size:20px;line-height:1;}
+  .calc-close:hover{color:var(--navy);}
+  .calc-display{background:var(--navy);border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:right;}
+  .calc-expr{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8593AD;min-height:16px;word-break:break-all;}
+  .calc-result{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;color:var(--gold);word-break:break-all;}
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .calc-btn{padding:14px 8px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent;}
+  .calc-btn:active{transform:scale(0.94);}
+  .calc-btn.num{background:var(--paper);color:var(--navy);}
+  .calc-btn.num:hover{background:#EFEAD9;}
+  .calc-btn.op{background:rgba(185,134,42,0.1);color:var(--gold-deep);}
+  .calc-btn.op:hover{background:rgba(185,134,42,0.18);}
+  .calc-btn.eq{background:var(--navy);color:var(--gold);grid-column:span 2;}
+  .calc-btn.eq:hover{background:var(--navy-2);}
+  .calc-btn.clear{background:rgba(196,72,58,0.1);color:var(--red);}
+  .calc-btn.clear:hover{background:rgba(196,72,58,0.18);}
+  .calc-btn.wide{grid-column:span 2;}
+
+  #resultsScreen.hidden{display:none;}
+  .results-wrap{max-width:600px;margin:0 auto;padding:40px 20px 80px;}
+  .results-hero{background:var(--navy);color:#fff;border-radius:18px;padding:36px 28px;text-align:center;margin-bottom:22px;position:relative;overflow:hidden;}
+  .results-hero-watermark{position:absolute;top:-60px;right:-80px;width:260px;height:260px;opacity:0.06;pointer-events:none;}
+  .results-hero-inner{position:relative;z-index:2;}
+  .score-big{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(38px,10vw,52px);line-height:1;}
+  .score-big span{font-size:clamp(17px,5vw,22px);color:#C7D2E6;font-weight:600;}
+  .score-label{color:#C7D2E6;font-size:14px;margin-top:8px;}
+  .results-breakdown{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:20px;}
+  .breakdown-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line);}
+  .breakdown-row:last-child{border-bottom:none;}
+  .breakdown-subject{font-weight:600;font-size:14px;color:var(--navy);}
+  .breakdown-score{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;}
+  .breakdown-score.good{color:var(--green);}
+  .breakdown-score.mid{color:var(--gold-deep);}
+  .breakdown-score.low{color:var(--red);}
+  .results-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn-outline-full{flex:1;min-width:140px;text-align:center;background:transparent;color:var(--navy);border:1.5px solid var(--line);padding:13px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;transition:border-color .15s,background .15s;}
+  .btn-outline-full:hover{border-color:#C5CCDA;background:var(--paper);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,0.6);z-index:100;display:none;align-items:flex-end;justify-content:center;padding:0;}
+  @media(min-width:500px){.modal-overlay{align-items:center;padding:20px;}}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:#fff;border-radius:20px 20px 0 0;padding:28px 24px 36px;width:100%;max-width:420px;text-align:center;}
+  @media(min-width:500px){.modal-box{border-radius:16px;padding:28px;}}
+  .modal-icon{width:48px;height:48px;margin:0 auto 14px;border-radius:12px;background:rgba(231,185,60,0.14);color:var(--gold-deep);display:flex;align-items:center;justify-content:center;}
+  .modal-icon svg{width:22px;height:22px;}
+  .modal-box h3{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+  .modal-box p{font-size:14px;color:var(--ink-soft);margin-bottom:22px;line-height:1.55;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal-actions button{flex:1;padding:13px;border-radius:10px;font-weight:600;font-size:14px;border:none;}
+  .modal-cancel{background:var(--paper);color:var(--navy);border:1.5px solid var(--line)!important;}
+  .modal-confirm{background:var(--red);color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="authGate">
+  <div class="gate-spinner"></div>
+  <p id="gateMsg">Loading your exam...</p>
+</div>
+
+<div id="appShell">
+
+  <!-- INTRO -->
+  <div id="introScreen">
+    <div class="intro-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
+    </div>
+    <h1>Ready for your CBT?</h1>
+    <p>You'll be tested on 4 subjects. Read the rules before you begin — once you start the clock runs.</p>
+
+    <div class="subjects-chips" id="subjectChips"></div>
+
+    <div class="intro-card">
+      <div class="intro-rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        You have <b>2 hours</b> total across all subjects combined.
+      </div>
+      <div class="intro-rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Move freely between all subjects and questions at any time.
+      </div>
+      <div class="intro-rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
+        Exam <b>auto-submits</b> when time runs out.
+      </div>
+      <div class="intro-rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+        Your score shows instantly after you submit. <b>One attempt only.</b>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="beginBtn">
+      Begin exam
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <!-- EXAM -->
+  <div id="examScreen" class="hidden">
+    <div class="exam-topbar">
+      <div class="exam-brand">
+        <img src="logo-white.png" alt="Zenova Study">
+        UTME Challenge 2.0
+      </div>
+      <div class="timer" id="timerDisplay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="timerText">02:00:00</span>
+      </div>
+      <button class="btn-calc" id="calcBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M12 10h2M16 10h0M8 14h2M12 14h2M16 14h2M8 18h2M12 18h2M16 18h2"/></svg>
+        Calc
+      </button>
+      <button class="btn-submit-top" id="submitTopBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Submit
+      </button>
+    </div>
+
+    <div class="subject-tabs" id="subjectTabs"></div>
+
+    <div class="exam-body">
+      <div class="question-col">
+        <div class="question-card">
+          <div class="q-meta">
+            <span class="q-number" id="qNumber">Question 1 of 10</span>
+            <button class="q-flag" id="flagBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></svg>
+              <span id="flagText">Flag</span>
+            </button>
+          </div>
+          <div class="q-text" id="qText">Loading question...</div>
+          <div class="options" id="optionsList"></div>
+          <div class="q-nav" id="desktopNav">
+            <button class="btn-nav" id="prevBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Prev
+            </button>
+            <button class="btn-nav primary" id="nextBtn">
+              Next
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="palette-col">
+        <div class="palette-card">
+          <div class="palette-header">
+            <span class="palette-title" id="paletteTitle">Questions</span>
+            <span class="palette-answered-count" id="paletteCount">0/0 answered</span>
+          </div>
+          <div class="palette-grid" id="paletteGrid"></div>
+          <div class="palette-legend">
+            <div class="legend-row"><span class="legend-dot" style="background:var(--paper);border:1.5px solid var(--line);"></span>Unanswered</div>
+            <div class="legend-row"><span class="legend-dot" style="background:rgba(185,134,42,0.12);border:1.5px solid var(--gold-deep);"></span>Answered</div>
+            <div class="legend-row"><span class="legend-dot" style="background:var(--navy);"></span>Current</div>
+          </div>
+          <button class="btn-submit-full" id="submitSideBtn">Submit exam</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-bar">
+      <button class="btn-nav" id="prevBtnMobile" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Prev
+      </button>
+      <button class="btn-palette-toggle" id="paletteToggleBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span id="paletteToggleText">0/0</span>
+      </button>
+      <button class="btn-nav primary" id="nextBtnMobile">
+        Next
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="palette-drawer" id="paletteDrawer">
+    <div class="drawer-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--navy);" id="drawerTitle">Questions</span>
+      <span style="font-size:12.5px;color:var(--ink-soft);font-weight:600;" id="drawerCount">0/0 answered</span>
+    </div>
+    <div class="palette-grid" id="paletteGridMobile" style="margin-bottom:14px;grid-template-columns:repeat(8,1fr);gap:6px;"></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:18px;">
+      <div class="legend-row"><span class="legend-dot" style="background:var(--paper);border:1.5px solid var(--line);"></span>Unanswered</div>
+      <div class="legend-row"><span class="legend-dot" style="background:rgba(185,134,42,0.12);border:1.5px solid var(--gold-deep);"></span>Answered</div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--navy);"></span>Current</div>
+    </div>
+    <button class="btn-submit-full" id="submitDrawerBtn">Submit exam</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsScreen" class="hidden">
+    <div class="results-wrap">
+      <div class="results-hero">
+        <img class="results-hero-watermark" src="logo-white.png" alt="">
+        <div class="results-hero-inner">
+          <div class="score-big"><span id="scoreTotal">0</span><span> / <span id="scoreMax">0</span></span></div>
+          <div class="score-label" id="scorePercent">0% overall</div>
+        </div>
+      </div>
+      <div class="results-breakdown" id="resultsBreakdown"></div>
+      <div class="results-actions">
+        <a class="btn-outline-full" href="dashboard.html">Back to dashboard</a>
+        <a class="btn-outline-full" href="subjects.html">Change subjects</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CALCULATOR -->
+<div class="calc-overlay" id="calcOverlay">
+  <div class="calc-box">
+    <div class="calc-header">
+      <span class="calc-title">Calculator</span>
+      <button class="calc-close" id="calcClose">×</button>
+    </div>
+    <div class="calc-display">
+      <div class="calc-expr" id="calcExpr"></div>
+      <div class="calc-result" id="calcResult">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="calc-btn clear" data-action="clear">AC</button>
+      <button class="calc-btn op" data-action="sign">+/-</button>
+      <button class="calc-btn op" data-action="percent">%</button>
+      <button class="calc-btn op" data-action="op" data-val="÷">÷</button>
+
+      <button class="calc-btn num" data-action="num" data-val="7">7</button>
+      <button class="calc-btn num" data-action="num" data-val="8">8</button>
+      <button class="calc-btn num" data-action="num" data-val="9">9</button>
+      <button class="calc-btn op" data-action="op" data-val="×">×</button>
+
+      <button class="calc-btn num" data-action="num" data-val="4">4</button>
+      <button class="calc-btn num" data-action="num" data-val="5">5</button>
+      <button class="calc-btn num" data-action="num" data-val="6">6</button>
+      <button class="calc-btn op" data-action="op" data-val="−">−</button>
+
+      <button class="calc-btn num" data-action="num" data-val="1">1</button>
+      <button class="calc-btn num" data-action="num" data-val="2">2</button>
+      <button class="calc-btn num" data-action="num" data-val="3">3</button>
+      <button class="calc-btn op" data-action="op" data-val="+">+</button>
+
+      <button class="calc-btn num wide" data-action="num" data-val="0">0</button>
+      <button class="calc-btn num" data-action="decimal">.</button>
+      <button class="calc-btn eq" data-action="equals">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT MODAL -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
+    </div>
+    <h3>Submit your exam?</h3>
+    <p id="modalText">Once submitted you can't make any more changes.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancelBtn">Keep going</button>
+      <button class="modal-confirm" id="modalConfirmBtn">Submit now</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJutYkF94mnZiBNdl_XgWOkoRlnyODGYc",
+    authDomain: "zenova-competition-f2197.firebaseapp.com",
+    projectId: "zenova-competition-f2197",
+    storageBucket: "zenova-competition-f2197.firebasestorage.app",
+    messagingSenderId: "385389095336",
+    appId: "1:385389095336:web:63e754823a3cbaea66959d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const SUBJECT_LABELS = {
+    english:"English", maths:"Mathematics", physics:"Physics", biology:"Biology",
+    chemistry:"Chemistry", geography:"Geography", economics:"Economics",
+    literature:"Literature", government:"Government", history:"History",
+    agric:"Agric Science", crs:"CRS", commerce:"Commerce",
+    irk:"Islamic Religious Knowledge", accounting:"Accounting"
+  };
+
+  const EXAM_DURATION = 2 * 60 * 60;
+
+  function buildPlaceholder(subjectId){
+    const label = SUBJECT_LABELS[subjectId] || subjectId;
+    const { maxQ } = getSubjectConfig(subjectId);
+    return Array.from({length:maxQ},(_,i)=>({
+      id:`${subjectId}-p${i+1}`,
+      text:`[Sample] ${label} question ${i+1}: Placeholder — replace with real JAMB question.`,
+      options:[`Option A`,`Option B`,`Option C`,`Option D`],
+      correctIndex:(i+subjectId.length)%4
+    }));
+  }
+
+  // English: 60 × 1.66667 = 100 | Others: 40 × 2.5 = 100 | Total = 400
+  const SUBJECT_CONFIG = {
+    english: { maxQ: 60, marksPerQ: 100/60 },
+    default: { maxQ: 40, marksPerQ: 2.5 }
+  };
+
+  function getSubjectConfig(subjectId){
+    return SUBJECT_CONFIG[subjectId] || SUBJECT_CONFIG.default;
+  }
+
+  async function fetchSubjectQuestions(subjectId){
+    const { maxQ } = getSubjectConfig(subjectId);
+    try{
+      const snap = await getDocs(collection(db,"questions",subjectId,"items"));
+      const qs=[];
+      snap.forEach(d=>{
+        const data=d.data();
+        if(data.text && Array.isArray(data.options) && typeof data.correctIndex==="number"){
+          qs.push({id:d.id,...data});
+        }
+      });
+      if(qs.length === 0) return buildPlaceholder(subjectId);
+      for(let i=qs.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [qs[i],qs[j]]=[qs[j],qs[i]];
+      }
+      return qs.slice(0, maxQ);
+    }catch(e){
+      console.error("Fetch questions failed:",e);
+      return buildPlaceholder(subjectId);
+    }
+  }
+
+  let currentUser=null, subjectOrder=[], questionsBySubject={};
+  let answers={}, flags=new Set();
+  let activeSubject=null, activeQIdx=0;
+  let timeRemaining=EXAM_DURATION, timerInterval=null, examSubmitted=false;
+
+  onAuthStateChanged(auth, async(user)=>{
+    if(!user){ window.location.href="login.html"; return; }
+    currentUser=user;
+
+    try{
+      const snap=await getDoc(doc(db,"users",user.uid));
+      if(!snap.exists()||!Array.isArray(snap.data().subjects)||snap.data().subjects.length!==4){
+        window.location.href="subjects.html"; return;
+      }
+      if(snap.data().examResult){
+        window.location.href="dashboard.html"; return;
+      }
+      subjectOrder=snap.data().subjects;
+    }catch(e){
+      console.error("Load user failed:",e);
+      window.location.href="subjects.html"; return;
+    }
+
+    document.getElementById('gateMsg').textContent="Loading questions...";
+
+    const results=await Promise.all(subjectOrder.map(id=>fetchSubjectQuestions(id)));
+    subjectOrder.forEach((id,i)=>{ questionsBySubject[id]=results[i]; });
+
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('appShell').classList.add('visible');
+
+    document.getElementById('subjectChips').innerHTML=subjectOrder.map(id=>
+      `<span class="subject-chip">${SUBJECT_LABELS[id]||id}</span>`
+    ).join('');
+  });
+
+  document.getElementById('beginBtn').addEventListener('click',()=>{
+    document.getElementById('introScreen').classList.add('hidden');
+    document.getElementById('examScreen').classList.remove('hidden');
+    activeSubject=subjectOrder[0]; activeQIdx=0;
+    renderTabs(); renderQuestion(); startTimer();
+    updateCalcVisibility();
+  });
+
+  function renderTabs(){
+    const el=document.getElementById('subjectTabs');
+    el.innerHTML=subjectOrder.map(id=>{
+      const total=questionsBySubject[id].length;
+      const done=questionsBySubject[id].filter(q=>answers[q.id]!==undefined).length;
+      return `<button class="subject-tab ${id===activeSubject?'active':''} ${done===total?'complete':''}" data-s="${id}">
+        ${SUBJECT_LABELS[id]||id}<span class="badge">${done}/${total}</span>
+      </button>`;
+    }).join('');
+    el.querySelectorAll('.subject-tab').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        activeSubject=btn.dataset.s; activeQIdx=0; renderTabs(); renderQuestion();
+        updateCalcVisibility();
+        btn.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      });
+    });
+    const active=el.querySelector('.subject-tab.active');
+    if(active) active.scrollIntoView({behavior:'instant',inline:'center',block:'nearest'});
+  }
+
+  function renderQuestion(){
+    const qs=questionsBySubject[activeSubject];
+    const q=qs[activeQIdx];
+    document.getElementById('qNumber').textContent=`${SUBJECT_LABELS[activeSubject]} · Q${activeQIdx+1}/${qs.length}`;
+    document.getElementById('qText').textContent=q.text;
+    const flagged=flags.has(q.id);
+    const flagBtn=document.getElementById('flagBtn');
+    flagBtn.classList.toggle('flagged',flagged);
+    document.getElementById('flagText').textContent=flagged?'Flagged':'Flag';
+    const letters=['A','B','C','D'];
+    document.getElementById('optionsList').innerHTML=q.options.map((opt,idx)=>`
+      <div class="option ${answers[q.id]===idx?'selected':''}" data-idx="${idx}">
+        <span class="option-letter">${letters[idx]}</span>
+        <span class="option-text">${opt}</span>
+      </div>`).join('');
+    document.querySelectorAll('.option').forEach(el=>{
+      el.addEventListener('click',()=>{
+        answers[q.id]=parseInt(el.dataset.idx);
+        renderQuestion(); renderTabs(); renderPalette();
+      });
+    });
+    const prevBtn=document.getElementById('prevBtn');
+    const prevBtnMobile=document.getElementById('prevBtnMobile');
+    const nextBtn=document.getElementById('nextBtn');
+    const nextBtnMobile=document.getElementById('nextBtnMobile');
+    const isFirstQ=activeQIdx===0;
+    prevBtn.disabled=isFirstQ;
+    prevBtnMobile.disabled=isFirstQ;
+    const isLastQ=activeQIdx===qs.length-1;
+    const curSubjIdx=subjectOrder.indexOf(activeSubject);
+    const isLastSubj=curSubjIdx===subjectOrder.length-1;
+    const nextLabel=isLastQ && isLastSubj
+      ? `Done <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M9 11l3 3L22 4"/></svg>`
+      : isLastQ
+        ? `Next subject <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`
+        : `Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+    nextBtn.innerHTML=nextLabel;
+    nextBtnMobile.innerHTML=nextLabel;
+    renderPalette();
+  }
+
+  document.getElementById('prevBtn').addEventListener('click',()=>{
+    if(activeQIdx>0){activeQIdx--; renderQuestion();}
+  });
+  document.getElementById('prevBtnMobile').addEventListener('click',()=>{
+    if(activeQIdx>0){activeQIdx--; renderQuestion();}
+  });
+  document.getElementById('nextBtn').addEventListener('click',()=>{
+    const qs=questionsBySubject[activeSubject];
+    if(activeQIdx<qs.length-1){activeQIdx++; renderQuestion();}
+    else{
+      const next=subjectOrder[subjectOrder.indexOf(activeSubject)+1];
+      if(next){activeSubject=next; activeQIdx=0; renderTabs(); renderQuestion(); updateCalcVisibility();}
+    }
+  });
+  document.getElementById('nextBtnMobile').addEventListener('click',()=>{
+    const qs=questionsBySubject[activeSubject];
+    if(activeQIdx<qs.length-1){activeQIdx++; renderQuestion();}
+    else{
+      const next=subjectOrder[subjectOrder.indexOf(activeSubject)+1];
+      if(next){activeSubject=next; activeQIdx=0; renderTabs(); renderQuestion(); updateCalcVisibility();}
+    }
+  });
+  document.getElementById('flagBtn').addEventListener('click',()=>{
+    const q=questionsBySubject[activeSubject][activeQIdx];
+    flags.has(q.id)?flags.delete(q.id):flags.add(q.id);
+    renderQuestion();
+  });
+
+  function openDrawer(){
+    document.getElementById('paletteDrawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    document.getElementById('paletteDrawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('show');
+    document.body.style.overflow='';
+  }
+  document.getElementById('paletteToggleBtn').addEventListener('click', openDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+  document.getElementById('paletteDrawer').querySelector('.drawer-handle').addEventListener('click', closeDrawer);
+
+  function renderPalette(){
+    const qs=questionsBySubject[activeSubject];
+    const answered=qs.filter(q=>answers[q.id]!==undefined).length;
+    const total=qs.length;
+
+    document.getElementById('paletteTitle').textContent=`${SUBJECT_LABELS[activeSubject]}`;
+    document.getElementById('paletteCount').textContent=`${answered}/${total} answered`;
+    document.getElementById('drawerTitle').textContent=`${SUBJECT_LABELS[activeSubject]}`;
+    document.getElementById('drawerCount').textContent=`${answered}/${total} answered`;
+    document.getElementById('paletteToggleText').textContent=`${answered}/${total}`;
+
+    const paletteHTML=qs.map((q,i)=>`
+      <button class="palette-btn ${answers[q.id]!==undefined?'answered':''} ${i===activeQIdx?'current':''} ${flags.has(q.id)?'flagged':''}" data-i="${i}">${i+1}</button>
+    `).join('');
+
+    const grid=document.getElementById('paletteGrid');
+    grid.innerHTML=paletteHTML;
+    grid.querySelectorAll('.palette-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{activeQIdx=parseInt(btn.dataset.i); renderQuestion();});
+    });
+
+    const gridMobile=document.getElementById('paletteGridMobile');
+    gridMobile.innerHTML=paletteHTML;
+    gridMobile.querySelectorAll('.palette-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        activeQIdx=parseInt(btn.dataset.i);
+        closeDrawer();
+        renderQuestion();
+      });
+    });
+  }
+
+  function startTimer(){
+    updateTimer();
+    timerInterval=setInterval(()=>{
+      timeRemaining--;
+      if(timeRemaining<=0){timeRemaining=0;updateTimer();clearInterval(timerInterval);submitExam(true);return;}
+      updateTimer();
+    },1000);
+  }
+  function updateTimer(){
+    const h=Math.floor(timeRemaining/3600),m=Math.floor((timeRemaining%3600)/60),s=timeRemaining%60;
+    document.getElementById('timerText').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const el=document.getElementById('timerDisplay');
+    el.classList.remove('warning','danger');
+    if(timeRemaining<=300)el.classList.add('danger');
+    else if(timeRemaining<=900)el.classList.add('warning');
+  }
+
+  function openModal(){
+    const unanswered=subjectOrder.reduce((sum,id)=>sum+questionsBySubject[id].filter(q=>answers[q.id]===undefined).length,0);
+    document.getElementById('modalText').textContent=unanswered>0
+      ?`You still have ${unanswered} unanswered question${unanswered===1?'':'s'}. Once submitted you can't change anything.`
+      :`You've answered every question. Once submitted you can't change anything.`;
+    document.getElementById('submitModal').classList.add('show');
+  }
+  ['submitTopBtn','submitSideBtn','submitDrawerBtn'].forEach(id=>document.getElementById(id).addEventListener('click',openModal));
+  document.getElementById('modalCancelBtn').addEventListener('click',()=>document.getElementById('submitModal').classList.remove('show'));
+  document.getElementById('modalConfirmBtn').addEventListener('click',()=>{
+    document.getElementById('submitModal').classList.remove('show');
+    submitExam(false);
+  });
+
+  async function submitExam(auto){
+    if(examSubmitted)return;
+    examSubmitted=true;
+    if(timerInterval)clearInterval(timerInterval);
+    let totalScore=0, totalMax=0;
+    const breakdown={};
+    subjectOrder.forEach(id=>{
+      const qs=questionsBySubject[id];
+      const { marksPerQ } = getSubjectConfig(id);
+      let correct=0;
+      qs.forEach(q=>{if(answers[q.id]===q.correctIndex)correct++;});
+      const subjectScore = Math.round(correct * marksPerQ * 100) / 100;
+      const subjectMax = Math.round(qs.length * marksPerQ * 100) / 100;
+      breakdown[id]={score:subjectScore, max:subjectMax, correct, total:qs.length};
+      totalScore+=subjectScore; totalMax+=subjectMax;
+    });
+    totalScore = Math.round(totalScore * 100) / 100;
+    totalMax = Math.round(totalMax * 100) / 100;
+    try{
+      await setDoc(doc(db,"users",currentUser.uid),{
+        examResult:{totalScore,totalMax,breakdown,subjects:subjectOrder,autoSubmitted:auto,submittedAt:serverTimestamp()}
+      },{merge:true});
+    }catch(e){console.error("Save result failed:",e);}
+    renderResults(totalScore,totalMax,breakdown);
+  }
+
+  function renderResults(totalScore,totalMax,breakdown){
+    document.getElementById('examScreen').classList.add('hidden');
+    document.getElementById('resultsScreen').classList.remove('hidden');
+    document.getElementById('scoreTotal').textContent=totalScore;
+    document.getElementById('scoreMax').textContent=totalMax;
+    const pct=totalMax>0?Math.round((totalScore/totalMax)*100):0;
+    document.getElementById('scorePercent').textContent=`${pct}% overall`;
+    document.getElementById('resultsBreakdown').innerHTML=subjectOrder.map(id=>{
+      const b=breakdown[id];
+      const p=b.max>0?b.score/b.max:0;
+      const cls=p>=.7?'good':p>=.4?'mid':'low';
+      return `<div class="breakdown-row">
+        <span class="breakdown-subject">${SUBJECT_LABELS[id]||id}</span>
+        <span class="breakdown-score ${cls}">${b.score}/${b.max} <span style="font-size:11px;opacity:0.7;">(${b.correct}/${b.total} correct)</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  // ---------- Calculator ----------
+  const CALC_SUBJECTS = new Set(['maths','physics','chemistry','economics','accounting']);
+
+  function updateCalcVisibility(){
+    const btn = document.getElementById('calcBtn');
+    btn.classList.toggle('visible', CALC_SUBJECTS.has(activeSubject));
+  }
+
+  document.getElementById('calcBtn').addEventListener('click',()=>{
+    document.getElementById('calcOverlay').classList.add('show');
+  });
+  document.getElementById('calcClose').addEventListener('click',()=>{
+    document.getElementById('calcOverlay').classList.remove('show');
+  });
+  document.getElementById('calcOverlay').addEventListener('click',(e)=>{
+    if(e.target === document.getElementById('calcOverlay'))
+      document.getElementById('calcOverlay').classList.remove('show');
+  });
+
+  let calcDisplay = '0';
+  let calcExpr = '';
+  let calcOperand = null;
+  let calcOperator = null;
+  let calcNewNum = true;
+
+  function calcUpdateDisplay(){
+    document.getElementById('calcResult').textContent = calcDisplay;
+    document.getElementById('calcExpr').textContent = calcExpr;
+  }
+
+  function calcApplyOp(a, op, b){
+    switch(op){
+      case '+': return a + b;
+      case '−': return a - b;
+      case '×': return a * b;
+      case '÷': return b !== 0 ? a / b : 'Error';
+    }
+  }
+
+  document.querySelectorAll('.calc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      const val = btn.dataset.val;
+
+      if(action === 'num'){
+        if(calcNewNum){
+          calcDisplay = val === '0' && calcDisplay === '0' ? '0' : val;
+          calcNewNum = false;
+        } else {
+          calcDisplay = calcDisplay === '0' ? val : calcDisplay + val;
+        }
+        if(calcDisplay.length > 12) calcDisplay = calcDisplay.slice(0, 12);
+      }
+      else if(action === 'decimal'){
+        if(calcNewNum){ calcDisplay = '0.'; calcNewNum = false; }
+        else if(!calcDisplay.includes('.')) calcDisplay += '.';
+      }
+      else if(action === 'clear'){
+        calcDisplay = '0'; calcExpr = ''; calcOperand = null; calcOperator = null; calcNewNum = true;
+      }
+      else if(action === 'sign'){
+        calcDisplay = String(parseFloat(calcDisplay) * -1);
+      }
+      else if(action === 'percent'){
+        calcDisplay = String(parseFloat(calcDisplay) / 100);
+      }
+      else if(action === 'op'){
+        if(calcOperator && !calcNewNum){
+          const result = calcApplyOp(calcOperand, calcOperator, parseFloat(calcDisplay));
+          calcDisplay = result === 'Error' ? 'Error' : String(Math.round(result * 1e10) / 1e10);
+          calcOperand = parseFloat(calcDisplay);
+        } else {
+          calcOperand = parseFloat(calcDisplay);
+        }
+        calcOperator = val;
+        calcExpr = `${calcDisplay} ${val}`;
+        calcNewNum = true;
+      }
+      else if(action === 'equals'){
+        if(calcOperator && calcOperand !== null){
+          const result = calcApplyOp(calcOperand, calcOperator, parseFloat(calcDisplay));
+          calcExpr = `${calcOperand} ${calcOperator} ${calcDisplay} =`;
+          calcDisplay = result === 'Error' ? 'Error' : String(Math.round(result * 1e10) / 1e10);
+          calcOperand = null; calcOperator = null; calcNewNum = true;
+        }
+      }
+      calcUpdateDisplay();
+    });
+  });
+
+  window.addEventListener('beforeunload',e=>{
+    if(!examSubmitted && !document.getElementById('examScreen').classList.contains('hidden')){
+      e.preventDefault(); e.returnValue='';
+    }
+  });
+</script>
+</body>
+</html>
